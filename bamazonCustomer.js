@@ -7,6 +7,8 @@ module.exports = function customerView(connection) {
 
     var mainView = require("./main.js");
 
+    var limitID;
+
     require("console.table");
 
 
@@ -41,14 +43,25 @@ module.exports = function customerView(connection) {
 
     // prompt them to buy!
     function placeOrder() {
+        // need to create a variable to store the last item_id so that we
+        //can have correct input validation
+
+        var query = "SELECT item_id FROM products WHERE item_id=(SELECT max(item_id) FROM products);";
+        connection.query(query, function(err, res) {
+            if (err) throw err;
+            limitID = res[0].item_id;
+        });
+
+
         inquirer.prompt([{
             name: "id",
             type: "input",
             message: "What ID would you like to purchase?",
             validate: function(value) {
-                if (isNaN(value) === false) {
+                if (value % 1 === 0 && value >= 1 && value <= limitID) {
                     return true;
                 }
+                console.log(" < Please enter a valid ID number. > ");
                 return false;
             }
         }, {
@@ -59,6 +72,7 @@ module.exports = function customerView(connection) {
                 if (isNaN(value) === false) {
                     return true;
                 }
+                console.log(" < Please enter a number. > ");
                 return false;
             }
         }]).then(function(answer) {
