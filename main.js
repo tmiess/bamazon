@@ -24,7 +24,7 @@ var connection = mysql.createConnection({
 
 // connect to server
 connection.connect(function(err) {
-    console.log("bamazon_db connected");
+    // console.log("bamazon_db connected");
     if (err) throw err;
     menu();
 });

@@ -58,7 +58,7 @@ module.exports = function managerView(connection) {
     function viewProducts() {
         //the app should list every available item:
         //the item IDs, names, prices, and quantities.
-        var query = "SELECT item_id, item_name, item_price, stock_quanitity FROM products";
+        var query = "SELECT item_id, item_name, item_price, stock_quantity FROM products";
         connection.query(query, function(err, res) {
             console.table(res);
             manageProducts();
@@ -66,17 +66,78 @@ module.exports = function managerView(connection) {
     }
 
     function viewLow() {
-        //then it should list all items with an inventory
-        //count lower than five.
+        //list all items with less than 5 units available
+        var query = "SELECT item_id, item_name, item_price, stock_quantity FROM products WHERE " +
+            "stock_quantity < 5";
+        connection.query(query, function(err, res) {
+            if (res.length == 0) {
+                console.log("All items have at least 5 units");
+            }
+            else {
+                console.table(res);
+            }
+            manageProducts();
+        });
     }
 
     function addTo() {
         // your app should display a prompt that will let
         //the manager "add more" of any item currently in the store.
+
+        // first display table
+        var query = "SELECT item_id, item_name, item_price, stock_quantity FROM products";
+        connection.query(query, function(err, res) {
+            console.table(res);
+        });
+
+        // then let them choose the product they need more of
+        inquirer.prompt([{
+            name: "ID",
+            type: "input",
+            message: "Select the item ID to increase quantity:"
+        }, {
+            name: "amount",
+            type: "input",
+            message: "Enter the number of units to add:"
+        }]).then(function(answer) {
+            connection.query("UPDATE products SET stock_quantity = stock_quantity + " + answer.amount + " WHERE ?", [
+                    { item_id: answer.ID }
+                ],
+                function(err) {
+                    if (err) throw err;
+                    console.log("Inventory is updated.");
+                    manageProducts();
+                });
+        });
     }
 
     function addNew() {
         //it should allow the manager to add a completely new product
         //to the store.
+        //insert name, dept, price, quantity
+        inquirer.prompt([{
+                name: "name",
+                type: "input",
+                message: "Product name: "
+            },
+            {
+                name: "department",
+                type: "input",
+                message: "Department name: "
+            }, {
+                name: "price",
+                type: "input",
+                message: "Unit price: "
+            }, {
+                name: "number",
+                type: "input",
+                message: "Number of units: "
+            }
+        ]).then(function(answer) {
+            connection.query("INSERT INTO products(item_name, department_name, item_price, stock_quantity) VALUES('" +
+                answer.name + "', '" + answer.department + "', " + answer.price + ", " + answer.number + ")");
+            console.log("New product has been added.");
+            manageProducts();
+        });
     }
 };
